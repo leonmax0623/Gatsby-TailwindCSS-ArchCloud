@@ -1,0 +1,34 @@
+kind: pipeline
+name: default
+steps:
+  - name: build-gatsby-preview-docker
+    image: plugins/docker
+    settings:
+      repo: registry.pixelpoint.io/arch-website
+      registry: registry.pixelpoint.io
+      dockerfile: Dockerfile.preview
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+
+  - name: deploy-gatsby-preview-server
+    image: peloton/drone-k8s-deployment
+    settings:
+      insecure: false
+      deployment_names: arch-website
+      container_names: arch-website
+      namespaces: websites
+      docker_image: registry.pixelpoint.io/arch-website:latest
+      date_label: deployment.drone.io/date-deployed
+      url:
+        from_secret: kubernetes_url
+      token:
+        from_secret: kubernetes_token
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
+    - custom
